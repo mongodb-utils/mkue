@@ -1,0 +1,37 @@
+{
+  "name": "mq",
+  "description": "",
+  "version": "0.0.0",
+  "author": "Jonathan Ong <me@jongleberry.com> (http://jongleberry.com)",
+  "license": "MIT",
+  "repository": "mongodb-utils/mq",
+  "dependencies": {
+    "debug": "*",
+    "exit-then": "1",
+    "mongodb-next": "0",
+    "ms": "0",
+    "native-or-bluebird": "1",
+    "timeout-then": "1"
+  },
+  "devDependencies": {
+    "bluebird": "2",
+    "istanbul": "0",
+    "mocha": "2",
+    "mongodb": "2"
+  },
+  "scripts": {
+    "test": "mocha --reporter spec",
+    "test-cov": "istanbul cover node_modules/mocha/bin/_mocha -- --reporter dot",
+    "test-travis": "istanbul cover node_modules/mocha/bin/_mocha --report lcovonly -- --reporter dot"
+  },
+  "keywords": [
+    "mongo",
+    "mongodb",
+    "queue",
+    "job",
+    "fifo"
+  ],
+  "files": [
+    "index.js"
+  ]
+}
