@@ -10,7 +10,7 @@ queue.run()
 var db
 
 before(function (done) {
-  MongoClient.connect('mongodb://localhost/mqtest', function (err, _db) {
+  MongoClient.connect('mongodb://localhost/mkuetest', function (err, _db) {
     assert.ifError(err)
     assert(db = _db)
     db.dropDatabase()

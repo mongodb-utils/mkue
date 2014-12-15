@@ -2,7 +2,7 @@
 var wrap = require('mongodb-next').collection
 var Promise = require('native-or-bluebird')
 var delay = require('timeout-then')
-var debug = require('debug')('mq')
+var debug = require('debug')('mkue')
 var cleanup = require('exit-then')
 var crypto = require('crypto')
 var assert = require('assert')
@@ -35,9 +35,11 @@ function Queue(options) {
 
   options = options || {}
 
-  this.pending = 0
+  if (options.collection) this.collection = options.collection
   this.concurrency(options.concurrency || 1)
   this.delay(options.delay || 1000)
+
+  this.pending = 0
   this.fns = Object.create(null)
   this.fnnames = []
 

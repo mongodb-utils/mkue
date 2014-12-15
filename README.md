@@ -1,5 +1,5 @@
 
-# mq
+# mkue
 
 [![NPM version][npm-image]][npm-url]
 [![Build status][travis-image]][travis-url]
@@ -9,21 +9,118 @@
 [![Downloads][downloads-image]][downloads-url]
 [![Gittip][gittip-image]][gittip-url]
 
-[gitter-image]: https://badges.gitter.im/mongodb-utils/mq.png
-[gitter-url]: https://gitter.im/mongodb-utils/mq
-[npm-image]: https://img.shields.io/npm/v/mq.svg?style=flat-square
-[npm-url]: https://npmjs.org/package/mq
-[github-tag]: http://img.shields.io/github/tag/mongodb-utils/mq.svg?style=flat-square
-[github-url]: https://github.com/mongodb-utils/mq/tags
-[travis-image]: https://img.shields.io/travis/mongodb-utils/mq.svg?style=flat-square
-[travis-url]: https://travis-ci.org/mongodb-utils/mq
-[coveralls-image]: https://img.shields.io/coveralls/mongodb-utils/mq.svg?style=flat-square
-[coveralls-url]: https://coveralls.io/r/mongodb-utils/mq
-[david-image]: http://img.shields.io/david/mongodb-utils/mq.svg?style=flat-square
-[david-url]: https://david-dm.org/mongodb-utils/mq
-[license-image]: http://img.shields.io/npm/l/mq.svg?style=flat-square
+A MongoDB-backed job queueing mechanism.
+
+- Concurrency handling
+- Throttling inputs
+- Persistence of all input/output
+- FIFO
+- Exits the process gracefully
+
+## Example
+
+Dispatcher:
+
+```js
+var Queue = require('mkue');
+
+var queue = new Queue();
+// set a db
+queue.collection = db.collection('stuff');
+// make sure indexes are set
+queue.ensureIndexes();
+
+queue.dispatch('this function', {
+  these: 'inputs'
+})
+```
+
+Worker:
+
+```js
+var Queue = require('mkue');
+
+var queue = new Queue();
+// set a db
+queue.collection = db.collection('stuff');
+// make sure indexes are set
+queue.ensureIndexes();
+
+// define a namespaced function
+queue.define('this function', function (options) {
+  return new Promise(function (resolve) {
+    resolve(options.these);
+  });
+});
+
+// set the concurrency
+queue.concurrency(5);
+
+// start listening
+queue.run();
+```
+
+## API
+
+### var queue = new Queue([options])
+
+The options are:
+
+- `concurrency <1>` - number of jobs to be processed in parallel in this process
+- `delay <1000>` - delay to query the next batch of jobs on drain
+- `collection` - the MongoDB collection for this queue
+
+### queue.collection =
+
+You are required to set the collection for this worker queue manually.
+
+### queue.concurrency(count <Integer>)
+
+### queue.delay(ms <Integer> | <String>)
+
+### queue.ensureIndexes().then( => )
+
+### queue.processing().then( count => )
+
+### queue.queued().then( count => )
+
+### queue.queue([ms <Integer>])
+
+### queue.dispatch([name <String>], fn <Function>).then( job => )
+
+### queue.get([name <String>], fn <Function>).then( job => )
+
+### queue.poll([name <String>], fn <Function>, [ms <Integer>]).then( job => )
+
+### queue.define([name <String>], fn <Function>)
+
+Define a function.
+`name` defaults to `'default'` if not set.
+`fn`'s API should be:
+
+```js
+fn([options]).then( result => )
+```
+
+### queue.run()
+
+### queue.close()
+
+[gitter-image]: https://badges.gitter.im/mongodb-utils/mkue.png
+[gitter-url]: https://gitter.im/mongodb-utils/mkue
+[npm-image]: https://img.shields.io/npm/v/mkue.svg?style=flat-square
+[npm-url]: https://npmjs.org/package/mkue
+[github-tag]: http://img.shields.io/github/tag/mongodb-utils/mkue.svg?style=flat-square
+[github-url]: https://github.com/mongodb-utils/mkue/tags
+[travis-image]: https://img.shields.io/travis/mongodb-utils/mkue.svg?style=flat-square
+[travis-url]: https://travis-ci.org/mongodb-utils/mkue
+[coveralls-image]: https://img.shields.io/coveralls/mongodb-utils/mkue.svg?style=flat-square
+[coveralls-url]: https://coveralls.io/r/mongodb-utils/mkue
+[david-image]: http://img.shields.io/david/mongodb-utils/mkue.svg?style=flat-square
+[david-url]: https://david-dm.org/mongodb-utils/mkue
+[license-image]: http://img.shields.io/npm/l/mkue.svg?style=flat-square
 [license-url]: LICENSE
-[downloads-image]: http://img.shields.io/npm/dm/mq.svg?style=flat-square
-[downloads-url]: https://npmjs.org/package/mq
+[downloads-image]: http://img.shields.io/npm/dm/mkue.svg?style=flat-square
+[downloads-url]: https://npmjs.org/package/mkue
 [gittip-image]: https://img.shields.io/gratipay/jonathanong.svg?style=flat-square
 [gittip-url]: https://gratipay.com/jonathanong/
