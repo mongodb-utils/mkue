@@ -20,9 +20,14 @@ var process_id = crypto.pseudoRandomBytes(16)
   queued: <Boolean> <sparse>,
   created: <Date>,
 
+  // output
+  result: ???,
+  error: {},
+
   // during processing
   started: <Date> <sparse>,
   ended: <Date> <sparse>,
+  process_id: <Binary> <sparse>,
   processing: <Boolean> <sparse>,
   processed: <Boolean> <sparse>,
 }
@@ -39,8 +44,11 @@ function Queue(options) {
   this.concurrency(options.concurrency || 1)
   this.delay(options.delay || 1000)
 
+  // current number of jobs being processed
   this.pending = 0
+  // all the functions
   this.fns = Object.create(null)
+  // name of all the functions, used to filter queries
   this.fnnames = []
 
   cleanup.push(this.cleanup.bind(this))
@@ -68,7 +76,7 @@ Object.defineProperty(Queue.prototype, 'collection', {
 
 Queue.prototype.concurrency = function (count) {
   assert(typeof count === 'number')
-  assert(count > 0)
+  assert(count >= 0)
   this._concurrency = count
   return this
 }
@@ -136,6 +144,7 @@ Queue.prototype.poll = function (name, options, interval) {
     interval = options
     options = {}
   }
+  if (typeof interval === 'string') interval = ms(interval)
   return this._poll(args(name, options), interval)
 }
 
@@ -183,6 +192,8 @@ Queue.prototype.run = function () {
   }).sort({
     date: 1 // oldest first
   }).new().then(function (job) {
+    if (self.closed) return self.pending--;
+
     if (!job) {
       // no job found, so we wait to poll again
       debug('no job found!')
@@ -198,6 +209,7 @@ Queue.prototype.run = function () {
     var fn = self.fns[job.name]
     assert(fn)
 
+    // wrapped in a promise to catch and `throws`
     new Promise(function (resolve) {
       resolve(fn(job.options))
     }).then(function (result) {
@@ -228,12 +240,14 @@ Queue.prototype.run = function () {
 /**
  * Called when there are no pending jobs.
  * Waits `.delay()`, then finds the next job.
+ * Could be called `.timeout()` or `.wait()` something as well.
  */
 
 Queue.prototype.queue = function (timeout) {
   if (this._queue) return
   debug('queueing')
   var self = this
+  if (typeof timeout === 'string') timeout = ms(timeout)
   this._queue = delay(timeout || this._delay).then(function () {
     debug('running')
     delete self._queue
@@ -244,6 +258,7 @@ Queue.prototype.queue = function (timeout) {
 /**
  * Ensures an index on the current collection for finding the next job.
  * You might want to add additional indexes for retrieving values.
+ * Built assuming that your queue is always going to be short.
  */
 
 Queue.prototype.ensureIndexes =
