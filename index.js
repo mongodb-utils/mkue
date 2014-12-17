@@ -123,6 +123,15 @@ Queue.prototype.dispatch = function (name, options) {
 }
 
 /**
+ * Get a job by its ID or name/input.
+ */
+
+Queue.prototype.get = function (name, options) {
+  if (isObjectID(name)) return this.getById(name);
+  return this.getByInput(name, options);
+}
+
+/**
  * Get a job by its ID.
  */
 
@@ -135,7 +144,7 @@ Queue.prototype.getById = function (job_id) {
  * Note: this requires its own index!
  */
 
-Queue.prototype.get = function (name, options) {
+Queue.prototype.getByInput = function (name, options) {
   return this.collection.findOne(args(name, options)).sort({
     created: -1 // newest
   })
@@ -366,4 +375,12 @@ function args(name, options) {
     name: name,
     options: options
   }
+}
+
+/**
+ * Whether an object is an ObjectID.
+ */
+
+function isObjectID(obj) {
+  return obj && obj.constructor && obj.constructor.name === 'ObjectID'
 }
