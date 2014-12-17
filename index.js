@@ -49,7 +49,7 @@ function Queue(options) {
   // all the functions
   this.fns = Object.create(null)
   // name of all the functions, used to filter queries
-  this.fnnames = []
+  this.names = []
 
   cleanup.push(this.cleanup.bind(this))
 }
@@ -102,7 +102,7 @@ Queue.prototype.define = function (name, fn) {
     name = 'default'
   }
   this.fns[name] = fn
-  this.fnnames = Object.keys(this.fns)
+  this.names = Object.keys(this.fns)
   return this
 }
 
@@ -217,7 +217,7 @@ Queue.prototype.run = function () {
   // reached max concurrency
   if (this.pending >= this._concurrency) return this.queue()
   // no functions can handle this yet
-  if (!this.fnnames.length) return this.queue()
+  if (!this.names.length) return this.queue()
 
   var self = this
   debug('running #%s', ++this.pending)
@@ -225,7 +225,7 @@ Queue.prototype.run = function () {
   this.collection.findOne({
     // only handle functions we can handle
     name: {
-      $in: this.fnnames
+      $in: this.names
     },
     queued: true,
   }).unset('queued').set({
