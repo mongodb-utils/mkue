@@ -108,6 +108,10 @@ Add a job to the queue.
 Get the latest job with `name` and `options`.
 May or may not be completed yet.
 
+### queue.getById(<ObjectId>).then( job => )
+
+Get a job by its ID.
+
 ### queue.poll([name <String>], options <Object>, [ms <Integer> | <String>]).then( job => )
 
 Poll the latest job at interval `ms` with `name` and `options` until it's complete.

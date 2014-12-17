@@ -8,6 +8,7 @@ var queue = Queue()
 queue.delay(10)
 queue.run()
 var db
+var job
 
 before(function (done) {
   MongoClient.connect('mongodb://localhost/mkuetest', function (err, _db) {
@@ -34,7 +35,8 @@ it('should work with a default function', function () {
     return queue.poll({
       value: 1
     }, 100)
-  }).then(function (job) {
+  }).then(function (_job) {
+    assert(job = _job)
     assert.equal(job.result, 5)
   })
 })
@@ -97,4 +99,11 @@ it('.close() should stop workers', function () {
 
 it('.cleanup() should unset any processing jobs', function () {
   return queue.cleanup()
+})
+
+it('.getById(_id) a job', function () {
+  return queue.getById(job._id).then(function (job2) {
+    assert(job2)
+    assert(job2._id.equals(job._id))
+  })
 })

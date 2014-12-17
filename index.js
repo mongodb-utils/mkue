@@ -123,6 +123,14 @@ Queue.prototype.dispatch = function (name, options) {
 }
 
 /**
+ * Get a job by its ID.
+ */
+
+Queue.prototype.getById = function (job_id) {
+  return this.collection.findOne('_id', job_id)
+}
+
+/**
  * Get the latest value of a namespace and option.
  * Note: this requires its own index!
  */
