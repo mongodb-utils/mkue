@@ -119,7 +119,7 @@ Queue.prototype.dispatch = function (name, options) {
     options: doc.options,
     queued: true,
     created: new Date(),
-  }).new().w('majority')
+  }).new()
 }
 
 /**
@@ -130,7 +130,7 @@ Queue.prototype.dispatch = function (name, options) {
 Queue.prototype.get = function (name, options) {
   return this.collection.findOne(args(name, options)).sort({
     created: -1 // newest
-  }).readPreference('nearest')
+  })
 }
 
 /**
@@ -154,7 +154,7 @@ Queue.prototype._poll = function (doc, interval) {
   interval = interval || this._delay
   return this.collection.findOne(doc).sort({
     created: -1 // newest
-  }).readPreference('nearest').then(function (job) {
+  }).then(function (job) {
     if (job && ('result' in job || 'error' in job)) return job
     return delay(interval).then(function () {
       return self._poll(doc, interval)
@@ -318,7 +318,7 @@ Queue.prototype.cleanup = function () {
 Queue.prototype.processing = function () {
   return this.collection.find({
     processing: true
-  }).readPreference('nearest').count()
+  }).count()
 }
 
 /**
@@ -328,7 +328,7 @@ Queue.prototype.processing = function () {
 Queue.prototype.queued = function () {
   return this.collection.find({
     queued: true
-  }).readPreference('nearest').count()
+  }).count()
 }
 
 /**
