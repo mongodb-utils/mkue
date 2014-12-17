@@ -151,30 +151,56 @@ Queue.prototype.getByInput = function (name, options) {
 }
 
 /**
+ * Poll a job.
+ */
+
+Queue.prototype.poll = function (name, options, interval) {
+  if (isObjectID(name)) return this.pollById(name, options)
+  return this.pollByInput(name, options, interval)
+}
+
+/**
+ * Poll a job by its ID.
+ */
+
+Queue.prototype.pollById = function (_id, interval) {
+  return this._pollById(_id, this._calculateInterval(interval))
+}
+
+Queue.prototype._pollById = function (_id, interval) {
+  debug('polling %s', _id)
+  var self = this
+  return this.collection.findOne('_id', _id).then(function (job) {
+    if (job && ('result' in job || 'error' in job)) return job
+    return delay(interval).then(function () {
+      return self._pollById(_id, interval)
+    })
+  })
+}
+
+/**
  * Poll the latest job until it's done.
  * Polls with interval set in `.delay()`.
  * Note: this requires its own index!
  */
 
-Queue.prototype.poll = function (name, options, interval) {
+Queue.prototype.pollByInput = function (name, options, interval) {
   if (typeof options === 'number' || typeof options === 'string') {
     interval = options
     options = {}
   }
-  if (typeof interval === 'string') interval = ms(interval)
-  return this._poll(args(name, options), interval)
+  return this._pollByInput(args(name, options), this._calculateInterval(interval))
 }
 
-Queue.prototype._poll = function (doc, interval) {
+Queue.prototype._pollByInput = function (doc, interval) {
   debug('polling %o', doc)
   var self = this
-  interval = interval || this._delay
   return this.collection.findOne(doc).sort({
     created: -1 // newest
   }).then(function (job) {
     if (job && ('result' in job || 'error' in job)) return job
     return delay(interval).then(function () {
-      return self._poll(doc, interval)
+      return self._pollByInput(doc, interval)
     })
   })
 }
@@ -357,6 +383,16 @@ Queue.prototype.onerror = function (err) {
   if (err instanceof Error) console.error(err.stack || err.message || err)
 }
 
+/**
+ * Calculate an interval.
+ */
+
+Queue.prototype._calculateInterval = function (interval) {
+  if (typeof interval === 'string') interval = ms(interval)
+  interval = interval || this._delay
+  assert(typeof interval === 'number')
+  return interval
+}
 /**
  * Check the arguments.
  */
