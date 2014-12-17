@@ -57,6 +57,20 @@ it('should work with a namespaced function', function () {
   })
 })
 
+it('.poll(_id)', function () {
+  queue.define('xxxxx', function (options) {
+    return options.value * 10
+  })
+
+  return queue.dispatch('xxxxx', {
+    value: 1
+  }).then(function (job) {
+    return queue.poll(job._id, 100)
+  }).then(function (job) {
+    assert.equal(job.result, 10)
+  })
+})
+
 it('should catch errors', function () {
   queue.define('error', function (options) {
     throw new Error('boom')
