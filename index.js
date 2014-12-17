@@ -290,8 +290,7 @@ Queue.prototype.queue = function (timeout) {
   if (this._queue) return
   debug('queueing')
   var self = this
-  if (typeof timeout === 'string') timeout = ms(timeout)
-  this._queue = delay(timeout || this._delay).then(function () {
+  this._queue = delay(this._calculateInterval(timeout)).then(function () {
     debug('running')
     delete self._queue
     self.run()
