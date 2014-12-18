@@ -16,12 +16,12 @@ var process_id = crypto.pseudoRandomBytes(16)
   // when initialized
   _id: <ObjectID>,
   name: "",
-  options: {},
+  input: {},
   queued: <Boolean> <sparse>,
   created: <Date>,
 
   // output
-  result: ???,
+  output: ???,
   error: {},
 
   // during processing
@@ -110,13 +110,13 @@ Queue.prototype.define = function (name, fn) {
  * Dispatch a job, optionally with a namespace.
  */
 
-Queue.prototype.dispatch = function (name, options) {
-  var doc = args(name, options)
+Queue.prototype.dispatch = function (name, input) {
+  var doc = args(name, input)
   doc.queued = true
   debug('dispatching %o', doc)
   return this.collection.findOne(doc).upsert({
     name: doc.name,
-    options: doc.options,
+    input: doc.input,
     queued: true,
     created: new Date(),
   }).new()
@@ -126,9 +126,9 @@ Queue.prototype.dispatch = function (name, options) {
  * Get a job by its ID or name/input.
  */
 
-Queue.prototype.get = function (name, options) {
+Queue.prototype.get = function (name, input) {
   if (isObjectID(name)) return this.getById(name);
-  return this.getByInput(name, options);
+  return this.getByInput(name, input);
 }
 
 /**
@@ -144,8 +144,8 @@ Queue.prototype.getById = function (job_id) {
  * Note: this requires its own index!
  */
 
-Queue.prototype.getByInput = function (name, options) {
-  return this.collection.findOne(args(name, options)).sort({
+Queue.prototype.getByInput = function (name, input) {
+  return this.collection.findOne(args(name, input)).sort({
     created: -1 // newest
   })
 }
@@ -154,9 +154,9 @@ Queue.prototype.getByInput = function (name, options) {
  * Poll a job.
  */
 
-Queue.prototype.poll = function (name, options, interval) {
-  if (isObjectID(name)) return this.pollById(name, options)
-  return this.pollByInput(name, options, interval)
+Queue.prototype.poll = function (name, input, interval) {
+  if (isObjectID(name)) return this.pollById(name, input)
+  return this.pollByInput(name, input, interval)
 }
 
 /**
@@ -171,7 +171,7 @@ Queue.prototype._pollById = function (_id, interval) {
   debug('polling %s', _id)
   var self = this
   return this.collection.findOne('_id', _id).then(function (job) {
-    if (job && ('result' in job || 'error' in job)) return job
+    if (job && ('output' in job || 'error' in job)) return job
     return delay(interval).then(function () {
       return self._pollById(_id, interval)
     })
@@ -184,12 +184,12 @@ Queue.prototype._pollById = function (_id, interval) {
  * Note: this requires its own index!
  */
 
-Queue.prototype.pollByInput = function (name, options, interval) {
-  if (typeof options === 'number' || typeof options === 'string') {
-    interval = options
-    options = {}
+Queue.prototype.pollByInput = function (name, input, interval) {
+  if (typeof input === 'number' || typeof input === 'string') {
+    interval = input
+    input = {}
   }
-  return this._pollByInput(args(name, options), this._calculateInterval(interval))
+  return this._pollByInput(args(name, input), this._calculateInterval(interval))
 }
 
 Queue.prototype._pollByInput = function (doc, interval) {
@@ -198,7 +198,7 @@ Queue.prototype._pollByInput = function (doc, interval) {
   return this.collection.findOne(doc).sort({
     created: -1 // newest
   }).then(function (job) {
-    if (job && ('result' in job || 'error' in job)) return job
+    if (job && ('output' in job || 'error' in job)) return job
     return delay(interval).then(function () {
       return self._pollByInput(doc, interval)
     })
@@ -254,13 +254,13 @@ Queue.prototype.run = function () {
 
     // wrapped in a promise to catch and `throws`
     new Promise(function (resolve) {
-      resolve(fn(job.options))
-    }).then(function (result) {
+      resolve(fn(job.input))
+    }).then(function (output) {
       self.collection.findOne('_id', job._id)
         .set('processed', true)
         .unset('processing')
         .set('ended', new Date())
-        .set('result', result)
+        .set('output', output)
         .catch(self.onerror)
 
       self.pending--
@@ -396,19 +396,19 @@ Queue.prototype._calculateInterval = function (interval) {
  * Check the arguments.
  */
 
-function args(name, options) {
+function args(name, input) {
   if (typeof name === 'object') {
-    options = name
+    input = name
     name = 'default'
   }
 
-  options = options || {}
+  input = input || {}
   assert(typeof name === 'string')
-  assert(typeof options === 'object')
+  assert(typeof input === 'object')
 
   return {
     name: name,
-    options: options
+    input: input
   }
 }
 

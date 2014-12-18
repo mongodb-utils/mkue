@@ -25,8 +25,8 @@ it('should ensure an index', function () {
 })
 
 it('should work with a default function', function () {
-  queue.define(function (options) {
-    return options.value * 5
+  queue.define(function (input) {
+    return input.value * 5
   })
 
   return queue.dispatch({
@@ -37,13 +37,13 @@ it('should work with a default function', function () {
     }, 100)
   }).then(function (_job) {
     assert(job = _job)
-    assert.equal(job.result, 5)
+    assert.equal(job.output, 5)
   })
 })
 
 it('should work with a namespaced function', function () {
-  queue.define('asdf', function (options) {
-    return options.value * 5
+  queue.define('asdf', function (input) {
+    return input.value * 5
   })
 
   return queue.dispatch('asdf', {
@@ -53,13 +53,13 @@ it('should work with a namespaced function', function () {
       value: 1
     }, 100)
   }).then(function (job) {
-    assert.equal(job.result, 5)
+    assert.equal(job.output, 5)
   })
 })
 
 it('.poll(_id)', function () {
-  queue.define('xxxxx', function (options) {
-    return options.value * 10
+  queue.define('xxxxx', function (input) {
+    return input.value * 10
   })
 
   return queue.dispatch('xxxxx', {
@@ -67,12 +67,12 @@ it('.poll(_id)', function () {
   }).then(function (job) {
     return queue.poll(job._id, 100)
   }).then(function (job) {
-    assert.equal(job.result, 10)
+    assert.equal(job.output, 10)
   })
 })
 
 it('should catch errors', function () {
-  queue.define('error', function (options) {
+  queue.define('error', function (input) {
     throw new Error('boom')
   })
 
@@ -87,15 +87,32 @@ it('should catch errors', function () {
   })
 })
 
+
+it('should support outputs that are arrays', function () {
+  queue.define(function (input) {
+    return [1, 2, 3]
+  })
+
+  return queue.dispatch({
+    value: 1
+  }).then(function (res) {
+    return queue.poll({
+      value: 1
+    }, 100)
+  }).then(function (job) {
+    assert.deepEqual(job.output, [1, 2, 3])
+  })
+})
+
 it('should .get() the latest value', function () {
   return queue.get('asdf', {
     value: 1
   }).then(function (job) {
-    assert(job.result)
+    assert(job.output)
   })
 })
 
-it('.queued() should return the number of queued results', function () {
+it('.queued() should return the number of queued outputs', function () {
   return queue.queued().then(function (count) {
     assert(typeof count === 'number')
   })
