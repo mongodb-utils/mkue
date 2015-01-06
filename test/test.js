@@ -138,3 +138,26 @@ it('.getById(_id) a job', function () {
     assert(job2._id.equals(job._id))
   })
 })
+
+it('should remove jobs if .dispose()', function () {
+  var queue = Queue()
+  queue.collection = db.collection('test2')
+  queue.delay(10)
+  queue.run()
+  queue.dispose()
+
+  queue.define(function () {
+    return true
+  })
+
+  return queue.dispatch({
+    value: 'asdf'
+  }).then(function next() {
+    return queue.collection.findOne('input.value', 'asdf')
+    .then(function (job) {
+      if (job) return new Promise(function (resolve) {
+        setTimeout(resolve, 10)
+      })
+    })
+  })
+})

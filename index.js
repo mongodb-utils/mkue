@@ -43,6 +43,7 @@ function Queue(options) {
   if (options.collection) this.collection = options.collection
   this.concurrency(options.concurrency || 1)
   this.delay(options.delay || 1000)
+  if (options.dispose) this.dispose()
 
   // current number of jobs being processed
   this.pending = 0
@@ -78,6 +79,15 @@ Queue.prototype.concurrency = function (count) {
   assert(typeof count === 'number')
   assert(count >= 0)
   this._concurrency = count
+  return this
+}
+
+/**
+ * Dispose the document on success.
+ */
+
+Queue.prototype.dispose = function () {
+  this._dispose = true
   return this
 }
 
@@ -256,12 +266,18 @@ Queue.prototype.run = function () {
     new Promise(function (resolve) {
       resolve(fn(job.input))
     }).then(function (output) {
-      self.collection.findOne('_id', job._id)
-        .set('processed', true)
-        .unset('processing')
-        .set('ended', new Date())
-        .set('output', output)
-        .catch(self.onerror)
+      if (self._dispose) {
+        self.collection.findOne('_id', job._id)
+          .remove()
+          .catch(self.onerror)
+      } else {
+        self.collection.findOne('_id', job._id)
+          .set('processed', true)
+          .unset('processing')
+          .set('ended', new Date())
+          .set('output', output)
+          .catch(self.onerror)
+      }
 
       self.pending--
       self.run()
