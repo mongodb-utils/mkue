@@ -8,6 +8,7 @@
   "dependencies": {
     "debug": "*",
     "exit-then": "1",
+    "json-stable-stringify": "1",
     "mongodb-next": "0",
     "ms": "0",
     "native-or-bluebird": "1",

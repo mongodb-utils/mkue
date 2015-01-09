@@ -1,4 +1,5 @@
 
+var stringify = require('json-stable-stringify')
 var wrap = require('mongodb-next').collection
 var Promise = require('native-or-bluebird')
 var delay = require('timeout-then')
@@ -127,6 +128,7 @@ Queue.prototype.dispatch = function (name, input) {
   return this.collection.findOne(doc).upsert({
     name: doc.name,
     input: doc.input,
+    hash: doc.hash,
     queued: true,
     created: new Date(),
   }).new()
@@ -424,7 +426,8 @@ function args(name, input) {
 
   return {
     name: name,
-    input: input
+    input: input,
+    hash: calculate(name, input),
   }
 }
 
@@ -434,4 +437,12 @@ function args(name, input) {
 
 function isObjectID(obj) {
   return obj && obj.constructor && obj.constructor.name === 'ObjectID'
+}
+
+function calculate(name, input) {
+  return crypto.createHash('sha256')
+    .update(name)
+    .update('-')
+    .update(stringify(input))
+    .digest()
 }
