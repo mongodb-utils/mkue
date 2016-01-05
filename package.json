@@ -11,7 +11,7 @@
     "json-stable-stringify": "1",
     "mongodb-next": "0",
     "ms": "0",
-    "native-or-bluebird": "1",
+    "native-or-bluebird": "1.2.0",
     "timeout-then": "1"
   },
   "devDependencies": {
